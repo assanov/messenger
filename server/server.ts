@@ -1,8 +1,8 @@
-import fastify from 'fastify';
 import { config } from 'dotenv';
+config();
+import fastify from 'fastify';
 import cors from '@fastify/cors';
 import { userRoutes } from './routes/users';
-config();
 
 const app = fastify();
 

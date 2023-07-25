@@ -5,7 +5,11 @@ import { useNavigate } from 'react-router-dom';
 
 interface AuthContextI {
     signup: UseMutationResult<AxiosResponse, unknown, UserI>;
-    login: UseMutationResult<AxiosResponse, unknown, { id: string }>;
+    login: UseMutationResult<
+        { token: string; user: UserI },
+        unknown,
+        { id: string }
+    >;
 }
 
 export interface UserI {

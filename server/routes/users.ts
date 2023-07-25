@@ -20,7 +20,7 @@ export async function userRoutes(app: FastifyInstance) {
             return res.status(400).send();
         }
 
-        return res.status(200).send();
+        // return res.status(200).send();
 
         const existingUser = await streamChat.queryUsers({ id });
 
@@ -37,8 +37,6 @@ export async function userRoutes(app: FastifyInstance) {
         if (!id) {
             return res.status(400).send();
         }
-
-        // return res.status(200).send();
 
         const {
             users: [user],
