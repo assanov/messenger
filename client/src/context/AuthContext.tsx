@@ -1,9 +1,18 @@
 import { UseMutationResult, useMutation } from '@tanstack/react-query';
 import axios, { AxiosResponse } from 'axios';
-import { ReactNode, createContext, useContext } from 'react';
+import {
+    ReactNode,
+    createContext,
+    useContext,
+    useEffect,
+    useState,
+} from 'react';
 import { useNavigate } from 'react-router-dom';
+import { StreamChat } from 'stream-chat';
 
 interface AuthContextI {
+    user: UserI | undefined;
+    streamChat: StreamChat | undefined;
     signup: UseMutationResult<AxiosResponse, unknown, UserI>;
     login: UseMutationResult<
         { token: string; user: UserI },
@@ -30,6 +39,9 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
     const navigate = useNavigate();
+    const [user, setUser] = useState<UserI>();
+    const [token, setToken] = useState<string>();
+    const [streamChat, setStreamChat] = useState<StreamChat>();
 
     const signup = useMutation({
         mutationFn: (user: UserI) => {
@@ -54,16 +66,40 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 })
                 .then((res) => res.data as { token: string; user: UserI });
         },
-        onSuccess() {
-            navigate('/login');
+        onSuccess(data) {
+            setUser(data.user);
+            setToken(data.token);
         },
         onError(e) {
             alert(e);
         },
     });
 
+    useEffect(() => {
+        if (!token || !user) return;
+
+        const chat = new StreamChat(import.meta.env.VITE_STREAM_API_KEY!);
+        if (chat.tokenManager.token === token && chat.userID === user.id)
+            return;
+
+        let isInterrupted = false;
+
+        const connectPromise = chat.connectUser(user, token).then(() => {
+            if (isInterrupted) return;
+            setStreamChat(chat);
+        });
+
+        return () => {
+            isInterrupted = true;
+            setStreamChat(undefined);
+            connectPromise.then(() => {
+                chat.disconnectUser();
+            });
+        };
+    }, [token, user]);
+
     return (
-        <Context.Provider value={{ signup, login }}>
+        <Context.Provider value={{ signup, login, user, streamChat }}>
             {children}
         </Context.Provider>
     );
