@@ -67,7 +67,11 @@ const Home = () => {
     if (streamChat == null) return <LoadingIndicator />;
     return (
         <Chat client={streamChat}>
-            <ChannelList List={Channels} sendChannelsToList />
+            <ChannelList
+                List={Channels}
+                sendChannelsToList
+                filters={{ members: { $in: [id] } }}
+            />
             <Channel>
                 <Window>
                     <ChannelHeader></ChannelHeader>
