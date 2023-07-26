@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { StreamChat } from 'stream-chat';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 
 interface AuthContextI {
     user: UserI | undefined;
@@ -19,6 +20,7 @@ interface AuthContextI {
         unknown,
         { id: string }
     >;
+    logout: UseMutationResult<AxiosResponse, unknown, void>;
 }
 
 export interface UserI {
@@ -39,8 +41,8 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
     const navigate = useNavigate();
-    const [user, setUser] = useState<UserI>();
-    const [token, setToken] = useState<string>();
+    const [user, setUser] = useLocalStorage<UserI>('user');
+    const [token, setToken] = useLocalStorage<string>('token');
     const [streamChat, setStreamChat] = useState<StreamChat>();
 
     const signup = useMutation({
@@ -75,6 +77,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
         },
     });
 
+    const logout = useMutation({
+        mutationFn: () => {
+            return axios.post(`${import.meta.env.VITE_SERVER_URL}/logout`, {
+                token,
+            });
+        },
+        onSuccess() {
+            setUser(undefined);
+            setToken(undefined);
+        },
+        onError(e) {
+            alert(e);
+        },
+    });
+
     useEffect(() => {
         if (!token || !user) return;
 
@@ -99,7 +116,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }, [token, user]);
 
     return (
-        <Context.Provider value={{ signup, login, user, streamChat }}>
+        <Context.Provider value={{ signup, login, logout, user, streamChat }}>
             {children}
         </Context.Provider>
     );
